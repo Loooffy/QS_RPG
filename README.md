@@ -1,7 +1,7 @@
 # QS_RPG
-a RPG game based on python and arcade framework. A first try by a group of beginners
+A RPG game based on python and arcade framework.
 
-**TODO**
+### TODO
 1. 地圖房間之間的移動 din
 2. 人物隨機移動 din
 3. 拿道具功能 din
