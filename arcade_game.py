@@ -33,7 +33,9 @@ class Game(arcade.View):
 
     def setup(self):
         self.man=Man()
+        self.man._set_collision_radius(80)
         self.box=arcade.Sprite('box1.png',1,center_x=200,center_y=300)
+        self.box._set_collision_radius(80)
         self.box_list=arcade.SpriteList()
         self.box_list.append(self.box)
         self.spritelist=arcade.SpriteList()
@@ -78,9 +80,8 @@ class Game(arcade.View):
 
     def on_key_press(self,key,modifiers):
         if key==arcade.key.W:
-            if arcade.check_for_collision(self.man,self.box) !=True:
-                self.man.direction='n'
-                self.man.change_y=5
+            self.man.direction='n'
+            self.man.change_y=5
         if key==arcade.key.S:
             self.man.direction='s'
             self.man.change_y=-5
