@@ -11,7 +11,7 @@ TRANSPORT = {(720,450):(450,720)}
 
 class Player(arcade.Sprite):
     def __init__(self,begin_x,begin_y,attack,defence,health,atkrange,speed):
-        filename = "./QS_RPG/monster.gif"
+        filename = "./monster.gif"
         super().__init__(filename=filename,scale=3)
         self.center_x = begin_x
         self.center_y = begin_y
@@ -101,10 +101,10 @@ class MyGame(arcade.Window):
         self.monster_list = arcade.SpriteList()
         self.npc_list = arcade.SpriteList()
         self.sprite_list = arcade.SpriteList()
-        self.sword = Item("./QS_RPG/image.gif",600,600)
-        self.apple = Item("./QS_RPG/image.gif",400,600)
-        self.rabbit = Monster("./QS_RPG/monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
-        self.troy = NPC("./QS_RPG/monster.gif",500,400)
+        self.sword = Item("./image.gif",600,600)
+        self.apple = Item("./image.gif",400,600)
+        self.rabbit = Monster("./monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
+        self.troy = NPC("./monster.gif",500,400)
         self.player = Player(300,400,attack=4,defence=3,health=20,atkrange=150,speed=3)
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
