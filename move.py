@@ -35,10 +35,10 @@ class Player(arcade.Sprite):
             self.bottom = 0
         elif self.top > HEIGHT:
             self.top = HEIGHT
-class Health_bar(arcade.SpriteSolidColor):
-            def __init__(self,width,height,color):
-                super().__init__(width,height,color)
 class Monster(arcade.Sprite):
+    class Health_bar(arcade.SpriteSolidColor):
+            def __init__(self,length,thickness,color):
+                super().__init__(length,thickness,color)
     def __init__(self,image,begin_x,begin_y,attack,defence,health,speed,scale=2):
         super().__init__(filename=image,scale=scale)
         self.center_x = begin_x
@@ -48,18 +48,13 @@ class Monster(arcade.Sprite):
         self.maxhealth = health
         self.health = health
         self.speed = speed
-        #self.set_health_bar()
-        self.health_bar = Health_bar(int(self.width/2),int(self.height/15),arcade.color.RED_BROWN)
-    def set_health_bar(self):
-        self.health_bar = arcade.ShapeElementList()
-        white_bar = arcade.create_rectangle_filled(self.center_x-self.width/2,self.top+10,self.width*7/8,self.height/8,arcade.color.WHITE)
-        red_bar = arcade.create_rectangle_filled(self.center_x-self.width/2,self.top+10,self.width*7/8*self.health/self.maxhealth,self.height/8,arcade.color.RED)
-        black_frame = arcade.create_rectangle_outline(self.center_x-self.width/2,self.top+10,self.width*7/8,self.height/8,arcade.color.BLACK,2)
-        self.health_bar.append(white_bar)
-        self.health_bar.append(red_bar)
-        self.health_bar.append(black_frame)
+        self.health_bar_length = int(self.width*3/4)
+        self.health_bar_thickness = int(self.height/15)
+        self.health_bar = self.Health_bar(self.health_bar_length,self.health_bar_thickness,arcade.color.ALABAMA_CRIMSON)
     def update(self):
-        pass
+        self.health_bar.width = self.health_bar_length*self.health/self.maxhealth
+        self.health_bar.left = self.center_x - self.health_bar_length/2
+        self.health_bar.bottom = self.top + 10
 class NPC(arcade.Sprite):
     def __init__(self,image,begin_x,begin_y,speed=0.6):
         super().__init__(filename=image,scale=2)
@@ -116,9 +111,12 @@ class MyGame(arcade.Window):
             self.npc_list.append(npc)
             self.sprite_list.append(npc)
         self.sprite_list.append(self.player)
+        self.physics_engine = arcade.PhysicsEngineSimple(self.player,self.monster_list)
     def on_draw(self):
         arcade.start_render()
         self.sprite_list.draw()
+        for monster in self.monster_list:
+            monster.health_bar.draw()
     def on_update(self,delta_time):
         #super().set_viewport(self.player.left-288,self.player.right+288,self.player.bottom-180,self.player.top+180)
         self.sprite_list.update()
@@ -129,6 +127,7 @@ class MyGame(arcade.Window):
             for sprite in self.sprite_list:
                 if abs(sprite.center_x-index[0]) < 30 and abs(sprite.center_y-index[1]) < 30:
                     sprite.center_x,sprite.center_y = TRANSPORT[index]
+        self.physics_engine.update()
     def on_key_press(self,key,modifier):
         if key == arcade.key.ESCAPE:
             arcade.close_window()
