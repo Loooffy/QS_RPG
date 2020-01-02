@@ -37,15 +37,13 @@ class Player(arcade.Sprite):
             self.bottom = 0
         elif self.top > HEIGHT:
             self.top = HEIGHT
-            
-class Health_bar(arcade.SpriteSolidColor):
-            def __init__(self,width,height,color):
-                super().__init__(width,height,color)
 
 class Monster(arcade.Sprite):
-    def __init__(self,begin_x,begin_y,attack,defence,health,speed,scale=1):
-        filename = "./monster.png"
-        super().__init__(filename=filename,scale=scale)
+    class Health_bar(arcade.SpriteSolidColor):
+            def __init__(self,length,thickness,color):
+                super().__init__(length,thickness,color)
+    def __init__(self,image,begin_x,begin_y,attack,defence,health,speed,scale=2):
+        super().__init__(filename=image,scale=scale)
         self.center_x = begin_x
         self.center_y = begin_y
         self.attack = attack
@@ -53,23 +51,17 @@ class Monster(arcade.Sprite):
         self.maxhealth = health
         self.health = health
         self.speed = speed
-        #self.set_health_bar()
-        self.health_bar = Health_bar(int(self.width/2),int(self.height/15),arcade.color.RED_BROWN)
+        self.health_bar_length = int(self.width*3/4)
+        self.health_bar_thickness = int(self.height/15)
+        self.health_bar = self.Health_bar(self.health_bar_length,self.health_bar_thickness,arcade.color.ALABAMA_CRIMSON)
 
-    def set_health_bar(self):
-        self.health_bar = arcade.ShapeElementList()
-        white_bar = arcade.create_rectangle_filled(self.center_x-self.width/2,self.top+10,self.width*7/8,self.height/8,arcade.color.WHITE)
-        red_bar = arcade.create_rectangle_filled(self.center_x-self.width/2,self.top+10,self.width*7/8*self.health/self.maxhealth,self.height/8,arcade.color.RED)
-        black_frame = arcade.create_rectangle_outline(self.center_x-self.width/2,self.top+10,self.width*7/8,self.height/8,arcade.color.BLACK,2)
-        self.health_bar.append(white_bar)
-        self.health_bar.append(red_bar)
-        self.health_bar.append(black_frame)
     def update(self):
-        pass
+        self.health_bar.width = self.health_bar_length*self.health/self.maxhealth
+        self.health_bar.left = self.center_x - self.health_bar_length/2
+        self.health_bar.bottom = self.top + 10
 
 class NPC(arcade.Sprite):
-    def __init__(self,begin_x,begin_y,speed=1):
-        filename = "./monster.png"
+    def __init__(self,filename,begin_x,begin_y,speed=1):
         super().__init__(filename=filename,scale=1)
         self.center_x = begin_x
         self.center_y = begin_y
@@ -143,13 +135,11 @@ class Game(arcade.View):
         self.monster_list = arcade.SpriteList()
         self.npc_list = arcade.SpriteList()
         self.sprite_list = arcade.SpriteList()
-        self.sound=arcade.Sound('in.wav')
         self.sword = Item("./image.gif",600,600)
         self.apple = Item("./image.gif",400,600)
-        self.rabbit = Monster(720,450,attack=3,defence=3,health=10,speed=0.5)
-        self.troy = NPC(500,400)
+        self.rabbit = Monster("./monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
+        self.troy = NPC("./monster.gif",500,400)
         self.player = Player(300,400,attack=4,defence=3,health=20,atkrange=150,speed=3)
-        self.sprite_list.append(self.player)
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
             self.sprite_list.append(item)
@@ -159,9 +149,10 @@ class Game(arcade.View):
         for npc in [self.troy]:
             self.npc_list.append(npc)
             self.sprite_list.append(npc)
+        self.sprite_list.append(self.player)
 
     def on_show(self):
-        arcade.set_background_color(arcade.color.BLACK)
+        arcade.set_background_color(arcade.color.WHITE)
 
     def on_draw(self):
         arcade.start_render()
@@ -169,6 +160,9 @@ class Game(arcade.View):
         arcade.draw_text('發大財',WIDTH-450,HEIGHT//2,arcade.color.BROWN,align="center",font_name='404notfont',font_size=80)
         super().on_draw()
         self.sprite_list.draw()
+
+        for monster in self.monster_list:
+            monster.health_bar.draw()
 
     def on_update(self,delta_time):
         #super().set_viewport(self.player.left-288,self.player.right+288,self.player.bottom-180,self.player.top+180)
