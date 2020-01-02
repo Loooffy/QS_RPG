@@ -35,7 +35,6 @@ class Game(arcade.View):
         self.man=Man()
         self.man._set_collision_radius(80)
         self.box=arcade.Sprite('box1.png',1,center_x=200,center_y=300)
-        self.box._set_collision_radius(80)
         self.box_list=arcade.SpriteList()
         self.box_list.append(self.box)
         self.spritelist=arcade.SpriteList()
