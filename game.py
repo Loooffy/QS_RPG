@@ -1,17 +1,105 @@
 import arcade
 import random
+import math
 
 # TODO fit sreens with different resolution.
 SIZE = WIDTH , HEIGHT = 1440,900
 TITLE = "Hi arcade"
 BACKGROUND_COLOR = arcade.color.WHITE
-FPS = 30
+FPS = 60
 
 DIRECTIONS = ["up","right","down","left"]
 TRANSPORT = {(720,450):(450,720)}
+"""
+def in_sector(x,y,center_x,center_y,degree,sector_degree=45): # 0 < = degree < 360 ,degree = 0 mean face west , 90 mean face north
+    def radian(degree):
+        return degree/180*math.pi
+    def in_right_border():
+        right_border_degree = degree + sector_degree
+        right_border_degree -= 360 if right_border_degree >= 360 else 0 
+        if right_border_degree % 90 == 0:
+            if factor_y > 0:
+                factor_y = 1
+                factor_x = 0
+                value = center_y
+            else :
+                factor_y = 0
+                factor_x = 1
+                value = center_x
+        else:
+            factor_y = 1
+            factor_x = math.tan(radian(right_border_degree))
+            value = center_x - center_y
+        if right_border_degree < 180 :
+            return factor_x * x + factor_y * y <= value
+        else:
+            return factor_x * x + factor_y * y >= value
+    def in_left_border():
+        left_border_degree = degree - sector_degree
+        left_border_degree += 360 if left_border_degree < 0 else 0 
+        if left_border_degree % 90 == 0:
+            if factor_y > 0:
+                factor_y = 1
+                factor_x = 0
+                value = center_y
+            else :
+                factor_y = 0
+                factor_x = 1
+                value = center_x
+        else:
+            factor_y = 1
+            factor_x = math.tan(radian(left_border_degree))
+            value = center_x - center_y
+        if left_border_degree < 180 :
+            return factor_x * x + factor_y * y <= value
+        else:
+            return factor_x * x + factor_y * y >= value
+    print(in_right_border())
+    print(in_left_border())
+    return in_right_border() and in_left_border()
+"""
+def get_distance(x1,y1,x2,y2):
+    return math.sqrt((x1-x2)**2 + (y1-y2)**2)
+def degree(radian):
+        return radian*180/math.pi
+def radian(degree):
+    return degree*math.pi/180
+def atan_to_degree(delta_x,delta_y):
+    if delta_y > 0:
+        if delta_x >= 0:
+            az = 90 - degree(math.atan(delta_x/delta_y))
+        else:
+            az = degree(math.atan(abs(delta_x)/delta_y)) + 90
+    elif delta_y < 0:
+        if delta_x < 0:
+            az = degree(math.atan(delta_x/abs(delta_y))) + 270
+        else:
+            az = degree(math.atan(delta_x/abs(delta_y))) + 270
+    else:
+        if delta_x > 0:
+            az= 0
+        elif delta_x < 0:
+            az = 180
+        else :
+            az = None
+    return az
+def in_sector(x,y,center_x,center_y,direction,sector_degree=45):
+    delta_x = x - center_x
+    delta_y = y - center_y
+    az = atan_to_degree(delta_x,delta_y)
+    if az != None:
+        return not sector_degree < abs(direction-az) < 360 - sector_degree
+    return False
+def polar_coordinate_to_cartesian(degree,distance,center_x,center_y):
+    if degree%360 == 90:
+        return center_x , center_y + distance
+    elif degree%360 == 270:
+        return center_x , center_y - distance
+    else:
+        return center_x + math.cos(radian(degree)) * distance , center_y + math.sin(radian(degree)) *distance
 
 class Player(arcade.Sprite):
-    def __init__(self,begin_x,begin_y,attack,defence,health,atkrange,speed):
+    def __init__(self,begin_x,begin_y,attack,defence,health,speed):
         filename = "./monster.png"
         super().__init__(filename=filename,scale=1.0)
         self.center_x = begin_x
@@ -20,13 +108,21 @@ class Player(arcade.Sprite):
         self.defence = defence
         self.maxhealth = health
         self.health = health
-        self.atkrange = atkrange
+        self.atkrange = 150
         self.speed = speed*60/FPS
         self.change_x = 0
         self.change_y = 0
         self.possession = arcade.SpriteList()
+        self.career = "gunner"
+        self.direction = 0
+        #guner set up
+        self.bullet_begin_distance_with_player = 50
+        self.bullet_speed = 5*60/FPS
+        self.gunner_atkrange = 350
 
     def update(self):
+        direction = atan_to_degree(self.change_x,self.change_y)
+        self.direction = direction if direction != None else self.direction
         self.center_x += self.change_x
         self.center_y += self.change_y
         if self.left < 0:
@@ -50,7 +146,7 @@ class Monster(arcade.Sprite):
         self.defence = defence
         self.maxhealth = health
         self.health = health
-        self.speed = speed
+        self.speed = speed*60/FPS
         self.health_bar_length = int(self.width*3/4)
         self.health_bar_thickness = int(self.height/15)
         self.health_bar = self.Health_bar(self.health_bar_length,self.health_bar_thickness,arcade.color.ALABAMA_CRIMSON)
@@ -129,6 +225,7 @@ class Game(arcade.View):
         self.sound=None
         self.view_left=0
         self.setup()
+        self.monster_be_hurt = []
 
     def setup(self):
         self.item_list = arcade.SpriteList()
@@ -137,19 +234,22 @@ class Game(arcade.View):
         self.sprite_list = arcade.SpriteList()
         self.sword = Item("./image.gif",600,600)
         self.apple = Item("./image.gif",400,600)
-        self.rabbit = Monster("./monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
+        self.rabbit1 = Monster("./monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
+        self.rabbit2 = Monster("./monster.gif",620,250,attack=3,defence=3,health=10,speed=0.5)
+        self.rabbit3 = Monster("./monster.gif",650,750,attack=3,defence=3,health=10,speed=0.5)
         self.troy = NPC("./monster.gif",500,400)
-        self.player = Player(300,400,attack=4,defence=3,health=20,atkrange=150,speed=3)
+        self.player = Player(300,400,attack=4,defence=3,health=20,speed=3)
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
             self.sprite_list.append(item)
-        for monster in [self.rabbit]:
+        for monster in [self.rabbit1,self.rabbit2,self.rabbit3]:
             self.monster_list.append(monster)
             self.sprite_list.append(monster)
         for npc in [self.troy]:
             self.npc_list.append(npc)
             self.sprite_list.append(npc)
         self.sprite_list.append(self.player)
+        self.bullet = arcade.Sprite("./bullet.gif")
 
     def on_show(self):
         arcade.set_background_color(arcade.color.WHITE)
@@ -165,8 +265,19 @@ class Game(arcade.View):
             monster.health_bar.draw()
 
     def on_update(self,delta_time):
-        #super().set_viewport(self.player.left-288,self.player.right+288,self.player.bottom-180,self.player.top+180)
         self.sprite_list.update()
+        if self.bullet in self.sprite_list:
+            monsters = arcade.check_for_collision_with_list(self.bullet,self.monster_list)
+            if monsters != []:
+                for monster in monsters:
+                    self.monster_be_hurt.append(monster)
+                self.bullet.kill()
+            if get_distance(self.bullet_resoure_x,self.bullet_resoure_y,self.bullet.center_x,self.bullet.center_y) >= self.player.gunner_atkrange:
+                self.bullet.kill()
+        for monster in self.monster_be_hurt:
+            monster.health -= self.player.attack-monster.defence
+            if monster.health < 0:
+                monster.health = 0
         for monster in self.monster_list:
             if monster.health == 0:
                 ｍonster.kill()
@@ -174,6 +285,7 @@ class Game(arcade.View):
             for sprite in self.sprite_list:
                 if abs(sprite.center_x-index[0]) < 100 and abs(sprite.center_y-index[1]) < 100:
                     sprite.center_x,sprite.center_y = TRANSPORT[index]
+        self.monster_be_hurt = []
 
     def on_key_press(self,key,modifier):
         if key == arcade.key.ESCAPE:
@@ -207,14 +319,23 @@ class Game(arcade.View):
             self.player.change_x += self.player.speed
 
     def player_attack(self):
-        monster_hurt = []
-        for monster in self.monster_list:
-            if arcade.get_distance_between_sprites(self.player,monster) <= self.player.atkrange:
-                monster_hurt.append(monster)
-        for monster in monster_hurt:
-            monster.health -= self.player.attack-monster.defence
-            if monster.health < 0:
-                monster.health = 0
+        if self.player.career == None:
+            monster_in_range = []
+            for monster in self.monster_list:
+                if arcade.get_distance_between_sprites(self.player,monster) <= self.player.atkrange :
+                    monster_in_range.append(monster)
+            for monster in monster_in_range:
+                if not in_sector(monster.center_x,monster.center_y,self.player.center_x,self.player.center_y,self.player.direction):
+                    monster_in_range.remove(monster)
+            if monster_in_range != []:
+                monster,distance = arcade.get_closest_sprite(self.player,monster_in_range)
+                self.monster_be_hurt.append(monster)
+        if self.player.career == "gunner":
+            if self.bullet not in self.sprite_list:
+                self.bullet_resoure_x , self.bullet_resoure_y = self.player.center_x , self.player.center_y
+                self.bullet.center_x , self.bullet.center_y = polar_coordinate_to_cartesian(self.player.direction,self.player.bullet_begin_distance_with_player,self.player.center_x,self.player.center_y)
+                self.bullet.change_x , self.bullet.change_y = polar_coordinate_to_cartesian(self.player.direction,self.player.bullet_speed,0,0)
+                self.sprite_list.append(self.bullet)
     
     def player_pick(self):
         item,distance = arcade.get_closest_sprite(self.player,self.item_list)
@@ -226,7 +347,7 @@ class Game(arcade.View):
 
 class MyGame(arcade.Window):
     def __init__(self,width,height,title,color):
-        super().__init__(width,height,title,fullscreen=True)
+        super().__init__(width,height,title,fullscreen=False)
         super().set_update_rate(1/FPS)
         #arcade.set_background_color(color)
         game=Game()
