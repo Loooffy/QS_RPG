@@ -129,11 +129,15 @@ class Player(arcade.Sprite):
         self.change_x = 0
         self.change_y = 0
         self.possession = arcade.SpriteList()
-        self.career = "gunner"
+        self.career = "mage"
         #gunner set up
         self.bullet_begin_distance_with_player = 50
         self.bullet_speed = 5*60/FPS
         self.gunner_atkrange = 350
+        #mage set up
+        self.fireball_begin_distance_with_player = 50
+        self.fireball_speed = 5*60/FPS
+        self.mage_atkrange = 350
 
     def update(self):
         direction = atan_to_degree(self.change_x,self.change_y)
@@ -249,7 +253,9 @@ class Game(arcade.View):
             self.npc_list.append(npc)
             self.sprite_list.append(npc)
         self.sprite_list.append(self.player)
+        #self.player.career set up
         self.bullet = arcade.Sprite("./image/bullet.png")
+        self.fireball = arcade.Sprite("./image/bullet.png",scale=4)
 
     def on_show(self):
         arcade.set_background_color(arcade.color.WHITE)
@@ -287,8 +293,17 @@ class Game(arcade.View):
                 for monster in monsters:
                     self.monster_be_hurt.append(monster)
                 self.bullet.kill()
-            if get_distance(self.bullet_resoure_x,self.bullet_resoure_y,self.bullet.center_x,self.bullet.center_y) >= self.player.gunner_atkrange:
+            if get_distance(self.bullet_resource_x,self.bullet_resource_y,self.bullet.center_x,self.bullet.center_y) >= self.player.gunner_atkrange:
                 self.bullet.kill()
+        if self.fireball in self.sprite_list:
+            monsters = arcade.check_for_collision_with_list(self.fireball,self.monster_list)
+            if monsters != []:
+                for monster in monsters:
+                    if monster not in self.monster_be_hurt_with_fireball:
+                        self.monster_be_hurt.append(monster)
+                        self.monster_be_hurt_with_fireball.append(monster)
+            if get_distance(self.fireball_resource_x,self.fireball_resource_y,self.fireball.center_x,self.fireball.center_y) >= self.player.mage_atkrange:
+                self.fireball.kill()
         for monster in self.monster_be_hurt:
             monster.health -= self.player.attack-monster.defence
             if monster.health < 0:
@@ -345,13 +360,20 @@ class Game(arcade.View):
             if monster_in_range != []:
                 monster,distance = arcade.get_closest_sprite(self.player,monster_in_range)
                 self.monster_be_hurt.append(monster)
-        if self.player.career == "gunner":
+        elif self.player.career == "gunner":
             if self.bullet not in self.sprite_list:
-                self.bullet_resoure_x , self.bullet_resoure_y = self.player.center_x , self.player.center_y
+                self.bullet_resource_x , self.bullet_resource_y = self.player.center_x , self.player.center_y
                 self.bullet.center_x , self.bullet.center_y = polar_coordinate_to_cartesian(self.player.direction,self.player.bullet_begin_distance_with_player,self.player.center_x,self.player.center_y)
                 self.bullet.change_x , self.bullet.change_y = polar_coordinate_to_cartesian(self.player.direction,self.player.bullet_speed,0,0)
                 self.sprite_list.append(self.bullet)
-    
+        elif self.player.career == "mage":
+            if self.fireball not in self.sprite_list:
+                self.monster_be_hurt_with_fireball = []
+                self.fireball_resource_x , self.fireball_resource_y = self.player.center_x , self.player.center_y
+                self.fireball.center_x , self.fireball.center_y = polar_coordinate_to_cartesian(self.player.direction,self.player.fireball_begin_distance_with_player,self.player.center_x,self.player.center_y)
+                self.fireball.change_x , self.fireball.change_y = polar_coordinate_to_cartesian(self.player.direction,self.player.fireball_speed,0,0)
+                self.sprite_list.append(self.fireball)
+
     def player_pick(self):
         item,distance = arcade.get_closest_sprite(self.player,self.item_list)
         if arcade.check_for_collision(self.player,item):
