@@ -118,19 +118,21 @@ class Game(arcade.View):
         self.monster_list = arcade.SpriteList()
         self.npc_list = arcade.SpriteList()
         self.sprite_list = arcade.SpriteList()
-        self.sword = Item("./image/pick.png",600,600)
-        self.apple = Item("./image/pick.png",400,600)
-        self.rabbit = Monster("./image/dog.png",600,700,10,2,20,10)
-        self.troy = NPC("./image/pick.png",500,400)
+        self.sword = Item("./image/npc.png",600,600)
+        self.apple = Item("./image/npc.png",400,600)
+        self.rabbit = Monster("./image/monster.png",600,700,10,2,20,10)
+        self.dog = Monster("./image/dog.png",300,300,10,2,20,10)
+        self.troy = NPC("./image/monster.png",500,400)
         self.teacher = NPC("./image/npc.png", 300,500)
-        self.student = NPC("./image/pick.png", 300,600)
+        self.student = NPC("./image/npc.png", 300,600)
         self.player = Player(300,400,attack=4,defence=3,health=20,atkrange=150,speed=3)
-        self.dialogue = ui.Dialogue(self)
+        self.optionbox = ui.Option_box(self)
+        self.dialogue = ui.Dialogue_box(self)
         self.infobox = ui.Infobox()
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
             self.sprite_list.append(item)
-        for monster in [self.rabbit]:
+        for monster in [self.rabbit, self.dog]:
             self.monster_list.append(monster)
             self.sprite_list.append(monster)
         for npc in [self.troy, self.teacher, self.student]:
@@ -192,9 +194,13 @@ class Game(arcade.View):
             self.player_attack()
         if key == arcade.key.C:
             self.player_pick()
-        if key==arcade.key.T and arcade.get_distance_between_sprites(self.player,self.teacher)<130:
-            self.texture=arcade.Texture('texture',arcade.get_image())
-            self.window.show_view(self.dialogue)
+        if key==arcade.key.T: 
+            if arcade.get_distance_between_sprites(self.player,self.teacher)<130:
+                self.texture=arcade.Texture('texture',arcade.get_image())
+                self.window.show_view(self.dialogue)
+            if arcade.get_distance_between_sprites(self.player,self.dog)<130:
+                self.texture=arcade.Texture('texture',arcade.get_image())
+                self.window.show_view(self.optionbox)
 
     def on_key_release(self,key,modifier):
         if key == arcade.key.W:
