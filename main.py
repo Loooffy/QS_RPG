@@ -1,19 +1,25 @@
 import arcade
 import random
-
-# TODO fit sreens with different resolution.
-SIZE = WIDTH , HEIGHT = 1440,900
-TITLE = "Hi arcade"
-BACKGROUND_COLOR = arcade.color.WHITE
-FPS = 30
-
-DIRECTIONS = ["up","right","down","left"]
-TRANSPORT = {(720,450):(450,720)}
+import ui
+from config import *
 
 class Player(arcade.Sprite):
     def __init__(self,begin_x,begin_y,attack,defence,health,atkrange,speed):
-        filename = "./monster.png"
-        super().__init__(filename=filename,scale=1.0)
+        super().__init__()
+        self.textures=arcade.load_spritesheet('./image/player_moves.png',96,96,4,16)
+        self.step=0
+        self.dir_textures={
+            's':[self.textures[0],self.textures[1],self.textures[2],self.textures[3]],
+            'e':[self.textures[4],self.textures[5],self.textures[6],self.textures[7]],
+            'n':[self.textures[8],self.textures[9],self.textures[10],self.textures[11]],
+            'w':[self.textures[12],self.textures[13],self.textures[14],self.textures[15]],
+            'idle_s':[self.textures[3],self.textures[3],self.textures[3],self.textures[3]],
+            'idle_e':[self.textures[7],self.textures[7],self.textures[7],self.textures[7]],
+            'idle_n':[self.textures[11],self.textures[11],self.textures[11],self.textures[11]],
+            'idle_w':[self.textures[15],self.textures[15],self.textures[15],self.textures[15]]
+            }
+        self.texture=self.dir_textures['idle_n'][0]
+        self.direction='idle_s'
         self.center_x = begin_x
         self.center_y = begin_y
         self.attack = attack
@@ -38,11 +44,16 @@ class Player(arcade.Sprite):
         elif self.top > HEIGHT:
             self.top = HEIGHT
 
+    def animation(self):
+        self.step=(self.step+1)%20
+        self.texture=self.dir_textures[self.direction][self.step//5]
+
 class Monster(arcade.Sprite):
     class Health_bar(arcade.SpriteSolidColor):
             def __init__(self,length,thickness,color):
                 super().__init__(length,thickness,color)
-    def __init__(self,image,begin_x,begin_y,attack,defence,health,speed,scale=2):
+
+    def __init__(self,image,begin_x,begin_y,attack,defence,health,speed,scale=1):
         super().__init__(filename=image,scale=scale)
         self.center_x = begin_x
         self.center_y = begin_y
@@ -94,34 +105,6 @@ class Item(arcade.Sprite):
         self.center_x = x
         self.center_y = y
 
-class Invetory(arcade.View):
-    def __init__(self,game_view):
-        super().__init__()
-        self.game_view=game_view
-        self.center_x=game_view.view_left+WIDTH//2
-        self.points=[(self.center_x-100,60),(self.center_x-35,60),(self.center_x+35,60),(self.center_x+100,60)]
-        self.dialogue_box_list=[]
-
-    def setup(self):
-        self.add_dialogue_box()
-        self.dialogue_box_list[0].active=True
-
-    def add_dialogue_box(self):
-        dialogue_box=arcade.gui.DialogueBox(WIDTH//2,300,WIDTH//2,100,arcade.color.BLACK)
-        message1='hello, this is the first game we made in QS, hope it would be fun'
-        message2='oh, yes, we have a game'
-        dialogue_box.text_list.append(arcade.gui.Text(message1,WIDTH//2,300,color=arcade.color.WHITE,font_size=36,font_name='404notfont',bold=True))
-        dialogue_box.text_list.append(arcade.gui.Text(message2,WIDTH//2,264,color=arcade.color.WHITE,font_size=36,font_name='404notfont',bold=True))
-        self.dialogue_box_list.append(dialogue_box)
-    
-    def on_key_press(self,key,modifiers):
-        if key==arcade.key.T:
-            self.window.show_view(self.game_view) 
-        '''
-        if key==arcade.key.SPACE:
-            self.dialogue_box_list[0].active=not self.dialogue_box_list[0].active
-        '''
-
 class Game(arcade.View):
     def __init__(self):
         super().__init__()
@@ -135,29 +118,31 @@ class Game(arcade.View):
         self.monster_list = arcade.SpriteList()
         self.npc_list = arcade.SpriteList()
         self.sprite_list = arcade.SpriteList()
-        self.sword = Item("./image.gif",600,600)
-        self.apple = Item("./image.gif",400,600)
-        self.rabbit = Monster("./monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
-        self.troy = NPC("./monster.gif",500,400)
+        self.sword = Item("./image/pick.png",600,600)
+        self.apple = Item("./image/pick.png",400,600)
+        self.rabbit = Monster("./image/dog.png",600,700,10,2,20,10)
+        self.troy = NPC("./image/pick.png",500,400)
+        self.teacher = NPC("./image/npc.png", 300,500)
+        self.student = NPC("./image/pick.png", 300,600)
         self.player = Player(300,400,attack=4,defence=3,health=20,atkrange=150,speed=3)
+        self.dialogue = ui.Dialogue(self)
+        self.infobox = ui.Infobox()
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
             self.sprite_list.append(item)
         for monster in [self.rabbit]:
             self.monster_list.append(monster)
             self.sprite_list.append(monster)
-        for npc in [self.troy]:
+        for npc in [self.troy, self.teacher, self.student]:
             self.npc_list.append(npc)
             self.sprite_list.append(npc)
         self.sprite_list.append(self.player)
-
-    def on_show(self):
-        arcade.set_background_color(arcade.color.WHITE)
+        self.background =  arcade.load_texture('./image/map.png',0,0,640,640,scale=1)
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_rectangle_outline(WIDTH-303,HEIGHT//2+3,600,HEIGHT-6,arcade.color.BROWN,border_width=8)
-        arcade.draw_text('發大財',WIDTH-450,HEIGHT//2,arcade.color.BROWN,align="center",font_name='404notfont',font_size=80)
+        arcade.draw_texture_rectangle(WIDTH//2,HEIGHT//2,1280,1280,self.background)
+        self.infobox.draw()
         super().on_draw()
         self.sprite_list.draw()
 
@@ -165,7 +150,20 @@ class Game(arcade.View):
             monster.health_bar.draw()
 
     def on_update(self,delta_time):
-        #super().set_viewport(self.player.left-288,self.player.right+288,self.player.bottom-180,self.player.top+180)
+        changed=False
+        right_bound=self.view_left+WIDTH*0.8
+        if self.player.right > right_bound:
+            self.view_left += self.player.right - right_bound
+            self.dialogue.center_x += self.player.right - right_bound
+            changed = True
+        left_bound=self.view_left+WIDTH*0.2
+        if self.player.left < left_bound:
+            self.view_left -= left_bound - self.player.left 
+            self.dialogue.center_x -= left_bound - self.player.left 
+            changed = True
+        if changed:
+            arcade.set_viewport(self.view_left,self.view_left+WIDTH,0,HEIGHT)
+        self.player.animation()
         self.sprite_list.update()
         for monster in self.monster_list:
             if monster.health == 0:
@@ -179,31 +177,37 @@ class Game(arcade.View):
         if key == arcade.key.ESCAPE:
             arcade.close_window()
         if key == arcade.key.W:
+            self.player.direction='n'
             self.player.change_y += self.player.speed
         elif key == arcade.key.S:
+            self.player.direction='s'
             self.player.change_y -= self.player.speed
         if key == arcade.key.D:
+            self.player.direction='e'
             self.player.change_x += self.player.speed
         elif key == arcade.key.A:
+            self.player.direction='w'
             self.player.change_x -= self.player.speed
         if key == arcade.key.SPACE:
             self.player_attack()
         if key == arcade.key.C:
             self.player_pick()
-        if key==arcade.key.T and arcade.get_distance_between_sprites(self.player,self.apple)<130:
+        if key==arcade.key.T and arcade.get_distance_between_sprites(self.player,self.teacher)<130:
             self.texture=arcade.Texture('texture',arcade.get_image())
-            inventory=Invetory(self)
-            inventory.setup()
-            self.window.show_view(inventory)
+            self.window.show_view(self.dialogue)
 
     def on_key_release(self,key,modifier):
         if key == arcade.key.W:
             self.player.change_y -= self.player.speed
+            self.player.direction='idle_n'
         elif key == arcade.key.S:
+            self.player.direction='idle_s'
             self.player.change_y += self.player.speed
         if key == arcade.key.D:
+            self.player.direction='idle_e'
             self.player.change_x -= self.player.speed
         elif key == arcade.key.A:
+            self.player.direction='idle_w'
             self.player.change_x += self.player.speed
 
     def player_attack(self):
@@ -228,7 +232,7 @@ class MyGame(arcade.Window):
     def __init__(self,width,height,title,color):
         super().__init__(width,height,title,fullscreen=True)
         super().set_update_rate(1/FPS)
-        #arcade.set_background_color(color)
+        arcade.set_background_color(arcade.color.GRAY)
         game=Game()
         self.show_view(game) 
 
@@ -236,4 +240,5 @@ def main():
     game = MyGame(WIDTH,HEIGHT,TITLE,BACKGROUND_COLOR)
     #game.setup()
     arcade.run()
+
 main()

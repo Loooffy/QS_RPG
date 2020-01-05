@@ -70,7 +70,7 @@ class Game(arcade.View):
             changed = True
         if changed:
             #print(self.view_left)
-            arcade.set_viewport(self.view_left,self.view_left+SCREEN_WIDTH,0,SCREEN_HEIGHT)
+            arcade.set_viewport(self.view_left,self.view_left+SCREEN_WIDTH*3,0,SCREEN_HEIGHT*3)
         #print(self.man.direction,self.man.step,delta_time)
         self.man.update()
         self.man.update_animation()
