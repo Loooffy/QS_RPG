@@ -100,7 +100,7 @@ def polar_coordinate_to_cartesian(degree,distance,center_x,center_y):
         return center_x + math.cos(radian(degree)) * distance , center_y + math.sin(radian(degree)) *distance
 
 class Player(arcade.Sprite):
-    def __init__(self,begin_x,begin_y,attack,defence,health,speed):
+    def __init__(self,begin_x,begin_y,attack,defence,health,speed,atkrange=150):
         super().__init__()
         self.textures=arcade.load_spritesheet('./image/player_moves.png',96,96,4,16)
         self.step=0
@@ -233,19 +233,22 @@ class Game(arcade.View):
         self.sprite_list = arcade.SpriteList()
         self.sword = Item("./image/npc.png",600,600)
         self.apple = Item("./image/npc.png",400,600)
-        self.rabbit = Monster("./image/monster.png",600,700,10,2,20,10)
+        self.rabbit1 = Monster("./image/monster.png",600,700,10,2,20,10)
+        self.rabbit2 = Monster("./image/monster.png",200,700,10,2,20,10)
+        self.rabbit3 = Monster("./image/monster.png",600,800,10,2,20,10)
         self.dog = Monster("./image/dog.png",300,300,10,2,20,10)
         self.troy = NPC("./image/monster.png",500,400)
         self.teacher = NPC("./image/npc.png", 300,500)
         self.student = NPC("./image/npc.png", 300,600)
         self.player = Player(300,400,attack=4,defence=3,health=20,atkrange=150,speed=3)
+        self.messagebox = ui.Message_box(self)
         self.optionbox = ui.Option_box(self)
         self.dialogue = ui.Dialogue_box(self)
         self.infobox = ui.Infobox()
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
             self.sprite_list.append(item)
-        for monster in [self.rabbit1,self.rabbit2,self.rabbit3]:
+        for monster in [self.rabbit1,self.rabbit2,self.rabbit3,self.dog]:
             self.monster_list.append(monster)
             self.sprite_list.append(monster)
         for npc in [self.troy, self.teacher, self.student]:
@@ -254,7 +257,7 @@ class Game(arcade.View):
         self.sprite_list.append(self.player)
         #self.player.career set up
         self.bullet = arcade.Sprite("./image/bullet.png")
-        self.fireball = arcade.Sprite("./image/bullet.png",scale=4)
+        self.fireball = arcade.Sprite("./image/bullet.png",scale=8)
 
     def on_show(self):
         arcade.set_background_color(arcade.color.WHITE)
@@ -286,6 +289,7 @@ class Game(arcade.View):
             arcade.set_viewport(self.view_left,self.view_left+WIDTH,0,HEIGHT)
         self.player.animation()
         self.sprite_list.update()
+
         if self.bullet in self.sprite_list:
             monsters = arcade.check_for_collision_with_list(self.bullet,self.monster_list)
             if monsters != []:
@@ -340,6 +344,9 @@ class Game(arcade.View):
             if arcade.get_distance_between_sprites(self.player,self.dog)<130:
                 self.texture=arcade.Texture('texture',arcade.get_image())
                 self.window.show_view(self.optionbox)
+            if arcade.get_distance_between_sprites(self.player,self.troy)<130:
+                self.texture=arcade.Texture('texture',arcade.get_image())
+                self.window.show_view(self.messagebox)
 
     def on_key_release(self,key,modifier):
         if key == arcade.key.W:
@@ -386,7 +393,7 @@ class Game(arcade.View):
 
 class MyGame(arcade.Window):
     def __init__(self,width,height,title,color):
-        super().__init__(width,height,title,fullscreen=False)
+        super().__init__(width,height,title,fullscreen=True)
         super().set_update_rate(1/FPS)
         arcade.set_background_color(arcade.color.GRAY)
         game=Game()

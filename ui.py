@@ -2,6 +2,25 @@ import arcade
 import utils
 from config import *
 
+class Message_box(arcade.View):
+    def __init__(self,game_view):
+        super().__init__()
+        self.game_view=game_view
+        self.center_x=game_view.view_left+WIDTH//2
+        self.box_texture=arcade.load_texture('./image/dialogue_box.png',0,0,960,240)
+        self.item_texture=arcade.load_texture('./image/pick.png',0,0,128,128)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_texture_rectangle(WIDTH//2,HEIGHT//2,WIDTH,HEIGHT,self.game_view.texture)
+        arcade.draw_texture_rectangle(self.center_x,HEIGHT//2,480,120,self.box_texture)
+        arcade.draw_text('得到一個PICK！',WIDTH//2-140,HEIGHT//2,color=WHITE,align='left',font_name='404notfont',font_size=20)
+        arcade.draw_texture_rectangle(WIDTH//2-50+200,HEIGHT//2,32,32,self.item_texture)
+
+    def on_key_press(self,key,modifiers):
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.game_view)
+
 class Infobox:
     def __init__(self):
         self.box_texture=arcade.load_texture('./image/infobox.png',0,0,300,900)
@@ -49,7 +68,6 @@ class Option_box(arcade.View):
                 self.window.show_view(self.game_view)
             else:
                 self.window.show_view(self.game_view)
-        
 
 class Dialogue_box(arcade.View):
     def __init__(self,game_view):
