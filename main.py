@@ -1,6 +1,8 @@
 import arcade
 import random
 import math
+import ui
+from config import *
 
 # TODO fit sreens with different resolution.
 SIZE = WIDTH , HEIGHT = 1440,900
@@ -100,8 +102,22 @@ def polar_coordinate_to_cartesian(degree,distance,center_x,center_y):
 
 class Player(arcade.Sprite):
     def __init__(self,begin_x,begin_y,attack,defence,health,speed):
-        filename = "./monster.png"
-        super().__init__(filename=filename,scale=1.0)
+        super().__init__()
+        self.textures=arcade.load_spritesheet('./image/player_moves.png',96,96,4,16)
+        self.step=0
+        self.dir_textures={
+            (270,'in_motion'):[self.textures[0],self.textures[1],self.textures[2],self.textures[3]],
+            (0,'in_motion'):[self.textures[4],self.textures[5],self.textures[6],self.textures[7]],
+            (90,'in_motion'):[self.textures[8],self.textures[9],self.textures[10],self.textures[11]],
+            (180,'in_motion'):[self.textures[12],self.textures[13],self.textures[14],self.textures[15]],
+            (270,'idle'):[self.textures[3],self.textures[3],self.textures[3],self.textures[3]],
+            (0,'idle'):[self.textures[7],self.textures[7],self.textures[7],self.textures[7]],
+            (90,'idle'):[self.textures[11],self.textures[11],self.textures[11],self.textures[11]],
+            (180,'idle'):[self.textures[15],self.textures[15],self.textures[15],self.textures[15]]
+            }
+        self.texture=self.dir_textures[90,'idle'][0]
+        self.direction = 270 # direction=0 => face east ,counter clockwise
+        self.status='idle' # status = "idle" or "in_motion"
         self.center_x = begin_x
         self.center_y = begin_y
         self.attack = attack
@@ -114,8 +130,7 @@ class Player(arcade.Sprite):
         self.change_y = 0
         self.possession = arcade.SpriteList()
         self.career = "gunner"
-        self.direction = 0
-        #guner set up
+        #gunner set up
         self.bullet_begin_distance_with_player = 50
         self.bullet_speed = 5*60/FPS
         self.gunner_atkrange = 350
@@ -123,6 +138,7 @@ class Player(arcade.Sprite):
     def update(self):
         direction = atan_to_degree(self.change_x,self.change_y)
         self.direction = direction if direction != None else self.direction
+        self.status = "in_motion" if direction != None else "idle"
         self.center_x += self.change_x
         self.center_y += self.change_y
         if self.left < 0:
@@ -134,11 +150,19 @@ class Player(arcade.Sprite):
         elif self.top > HEIGHT:
             self.top = HEIGHT
 
+    def animation(self):
+        self.step=(self.step+1)%20
+        try:
+            self.texture=self.dir_textures[self.direction,self.status][self.step//5]
+        except KeyError:
+            self.texture = self.textures[3]
+
 class Monster(arcade.Sprite):
     class Health_bar(arcade.SpriteSolidColor):
             def __init__(self,length,thickness,color):
                 super().__init__(length,thickness,color)
-    def __init__(self,image,begin_x,begin_y,attack,defence,health,speed,scale=2):
+
+    def __init__(self,image,begin_x,begin_y,attack,defence,health,speed,scale=1):
         super().__init__(filename=image,scale=scale)
         self.center_x = begin_x
         self.center_y = begin_y
@@ -190,34 +214,6 @@ class Item(arcade.Sprite):
         self.center_x = x
         self.center_y = y
 
-class Invetory(arcade.View):
-    def __init__(self,game_view):
-        super().__init__()
-        self.game_view=game_view
-        self.center_x=game_view.view_left+WIDTH//2
-        self.points=[(self.center_x-100,60),(self.center_x-35,60),(self.center_x+35,60),(self.center_x+100,60)]
-        self.dialogue_box_list=[]
-
-    def setup(self):
-        self.add_dialogue_box()
-        self.dialogue_box_list[0].active=True
-
-    def add_dialogue_box(self):
-        dialogue_box=arcade.gui.DialogueBox(WIDTH//2,300,WIDTH//2,100,arcade.color.BLACK)
-        message1='hello, this is the first game we made in QS, hope it would be fun'
-        message2='oh, yes, we have a game'
-        dialogue_box.text_list.append(arcade.gui.Text(message1,WIDTH//2,300,color=arcade.color.WHITE,font_size=36,font_name='404notfont',bold=True))
-        dialogue_box.text_list.append(arcade.gui.Text(message2,WIDTH//2,264,color=arcade.color.WHITE,font_size=36,font_name='404notfont',bold=True))
-        self.dialogue_box_list.append(dialogue_box)
-    
-    def on_key_press(self,key,modifiers):
-        if key==arcade.key.T:
-            self.window.show_view(self.game_view) 
-        '''
-        if key==arcade.key.SPACE:
-            self.dialogue_box_list[0].active=not self.dialogue_box_list[0].active
-        '''
-
 class Game(arcade.View):
     def __init__(self):
         super().__init__()
@@ -232,32 +228,37 @@ class Game(arcade.View):
         self.monster_list = arcade.SpriteList()
         self.npc_list = arcade.SpriteList()
         self.sprite_list = arcade.SpriteList()
-        self.sword = Item("./image.gif",600,600)
-        self.apple = Item("./image.gif",400,600)
-        self.rabbit1 = Monster("./monster.gif",720,450,attack=3,defence=3,health=10,speed=0.5)
-        self.rabbit2 = Monster("./monster.gif",620,250,attack=3,defence=3,health=10,speed=0.5)
-        self.rabbit3 = Monster("./monster.gif",650,750,attack=3,defence=3,health=10,speed=0.5)
-        self.troy = NPC("./monster.gif",500,400)
+        self.sword = Item("./image/pick.png",600,600)
+        self.apple = Item("./image/pick.png",400,600)
+        self.rabbit1 = Monster("./image/dog.png",700,700,10,2,20,10)
+        self.rabbit2 = Monster("./image/dog.png",600,700,10,2,20,10)
+        self.rabbit3 = Monster("./image/dog.png",500,700,10,2,20,10)
+        self.troy = NPC("./image/pick.png",500,400)
+        self.teacher = NPC("./image/npc.png", 300,500)
+        self.student = NPC("./image/pick.png", 300,600)
         self.player = Player(300,400,attack=4,defence=3,health=20,speed=3)
+        self.dialogue = ui.Dialogue(self)
+        self.infobox = ui.Infobox()
         for item in [self.sword,self.apple]:
             self.item_list.append(item)
             self.sprite_list.append(item)
         for monster in [self.rabbit1,self.rabbit2,self.rabbit3]:
             self.monster_list.append(monster)
             self.sprite_list.append(monster)
-        for npc in [self.troy]:
+        for npc in [self.troy, self.teacher, self.student]:
             self.npc_list.append(npc)
             self.sprite_list.append(npc)
         self.sprite_list.append(self.player)
-        self.bullet = arcade.Sprite("./bullet.gif")
+        self.bullet = arcade.Sprite("./image/bullet.png")
 
     def on_show(self):
         arcade.set_background_color(arcade.color.WHITE)
+        self.background =  arcade.load_texture('./image/map.png',0,0,640,640,scale=1)
 
     def on_draw(self):
         arcade.start_render()
-        arcade.draw_rectangle_outline(WIDTH-303,HEIGHT//2+3,600,HEIGHT-6,arcade.color.BROWN,border_width=8)
-        arcade.draw_text('發大財',WIDTH-450,HEIGHT//2,arcade.color.BROWN,align="center",font_name='404notfont',font_size=80)
+        arcade.draw_texture_rectangle(WIDTH//2,HEIGHT//2,1280,1280,self.background)
+        self.infobox.draw()
         super().on_draw()
         self.sprite_list.draw()
 
@@ -265,6 +266,20 @@ class Game(arcade.View):
             monster.health_bar.draw()
 
     def on_update(self,delta_time):
+        changed=False
+        right_bound=self.view_left+WIDTH*0.8
+        if self.player.right > right_bound:
+            self.view_left += self.player.right - right_bound
+            self.dialogue.center_x += self.player.right - right_bound
+            changed = True
+        left_bound=self.view_left+WIDTH*0.2
+        if self.player.left < left_bound:
+            self.view_left -= left_bound - self.player.left 
+            self.dialogue.center_x -= left_bound - self.player.left 
+            changed = True
+        if changed:
+            arcade.set_viewport(self.view_left,self.view_left+WIDTH,0,HEIGHT)
+        self.player.animation()
         self.sprite_list.update()
         if self.bullet in self.sprite_list:
             monsters = arcade.check_for_collision_with_list(self.bullet,self.monster_list)
@@ -281,10 +296,12 @@ class Game(arcade.View):
         for monster in self.monster_list:
             if monster.health == 0:
                 ｍonster.kill()
+        """
         for index in TRANSPORT.keys():
             for sprite in self.sprite_list:
                 if abs(sprite.center_x-index[0]) < 100 and abs(sprite.center_y-index[1]) < 100:
                     sprite.center_x,sprite.center_y = TRANSPORT[index]
+        """
         self.monster_be_hurt = []
 
     def on_key_press(self,key,modifier):
@@ -302,11 +319,9 @@ class Game(arcade.View):
             self.player_attack()
         if key == arcade.key.C:
             self.player_pick()
-        if key==arcade.key.T and arcade.get_distance_between_sprites(self.player,self.apple)<130:
+        if key==arcade.key.T and arcade.get_distance_between_sprites(self.player,self.teacher)<130:
             self.texture=arcade.Texture('texture',arcade.get_image())
-            inventory=Invetory(self)
-            inventory.setup()
-            self.window.show_view(inventory)
+            self.window.show_view(self.dialogue)
 
     def on_key_release(self,key,modifier):
         if key == arcade.key.W:
@@ -349,7 +364,7 @@ class MyGame(arcade.Window):
     def __init__(self,width,height,title,color):
         super().__init__(width,height,title,fullscreen=False)
         super().set_update_rate(1/FPS)
-        #arcade.set_background_color(color)
+        arcade.set_background_color(arcade.color.GRAY)
         game=Game()
         self.show_view(game) 
 
@@ -357,4 +372,5 @@ def main():
     game = MyGame(WIDTH,HEIGHT,TITLE,BACKGROUND_COLOR)
     #game.setup()
     arcade.run()
+
 main()
