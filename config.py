@@ -1,13 +1,66 @@
 import arcade
 
+R1= [[87,187],[160,187],[160,1350],[87,1350]]
+R2= [[152,187],[500,187],[500,260],[152,260]]
+R3= [[482,187],[550,187],[550,1350],[482,1350]]
+P = [R1,R2,R3]
+
+WHITE = arcade.color.WHITE
+BLACK = arcade.color.BLACK
+
 SIZE = WIDTH , HEIGHT = 1440,900
+RIGHT_BOUND = WIDTH * 0.65
+LEFT_BOUND = WIDTH * 0.3
+TOP_BOUND = HEIGHT * 0.75
+BOTTOM_BOUND = HEIGHT * 0.2
 TITLE = "Hi arcade"
 BACKGROUND_COLOR = arcade.color.GRAY
 FPS = 30
 
+CHAR_SIZE = 96
 DIRECTIONS = ["up","right","down","left"]
 TRANSPORT = {(720,450):(450,720)}
-INFOBOX_TITLES='./text/infobox_titles.txt'
 
-WHITE = arcade.color.WHITE
-BLACK = arcade.color.BLACK
+INFOBOX_TITLES='./text/infobox_titles.txt'
+INFOBOX_WIDTH = 300
+INFOBOX_T_MARGIN = 50
+
+TEXT_MARGIN_H = 50
+TEXT_MARGIN_V = 50
+
+DB_WIDTH = 960
+DB_HEIGHT = 240
+DB_CENTER_X = (WIDTH - INFOBOX_WIDTH)//2
+DB_CENTER_Y = 200
+CHAR_PER_LINE = 16
+SPACING = 50
+
+DB_P_MARGIN = 50
+DB_P_W = 128
+DB_P_H = 128
+DB_P_X = DB_CENTER_X - DB_WIDTH//2 + DB_P_W//2 + DB_P_MARGIN
+DB_P_Y = DB_CENTER_Y
+
+DB_T_MARGIN = 50
+DB_T_X = DB_P_X + DB_P_W + DB_P_MARGIN
+DB_T_Y = DB_CENTER_Y - DB_HEIGHT//2 + DB_T_MARGIN
+
+MSG_BOX_W, MSG_BOX_H = 960 ,240
+MSG_BOX_X = (WIDTH-INFOBOX_WIDTH)//2
+MSG_BOX_Y = HEIGHT//2
+MSG_CONDITION = {'tired':'你太累了，先去休息一下吧！',
+             'get':'得到了一個',
+             'study':'花了一節課的時間學習了',
+            }
+MSG_I_W, MSG_I_H = 32,32
+MSG_I_X = MSG_BOX_X + 100
+MSG_I_Y = HEIGHT//2
+
+OPT_BOX_W, OPT_BOX_H = 960,240
+OPT_BOX_X = (WIDTH-INFOBOX_WIDTH)//2
+OPT_BOX_Y = HEIGHT//2
+
+OPT_C_W, OPT_C_H = 32,32
+OPT_C_X = OPT_BOX_X - 100
+OPT_C_Y = HEIGHT//2
+OPT_C_MOVE=210

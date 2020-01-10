@@ -4,7 +4,7 @@ def readtext(filename):
     with open(filename,'r') as f:
         return f.read()
 
-def text_warp(text, words_per_line):
+def text_wrap(text, words_per_line):
 
     text_wrapped=""
     paragraphs=text.split('\n\n')
